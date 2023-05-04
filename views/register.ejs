@@ -1,0 +1,23 @@
+<html>
+<title> Registration </title>
+<body bgcolor="lightblue">
+<h1>Welcome to the registration page!</h1>
+<br>
+
+<h2>Register</h2>
+<form action="/register" method="post">
+  <label for="username">User name:</label><br>
+  <input type="text" id="username" name="username" value="">
+  <p style="color:red">**Username must only contain lowercase letters (a-z), uppercase letters (A-Z), numbers (0-9), periods (.), and underscores (_).</p>
+  <br>
+  <label for="password">Password:</label><br>
+  <input type="password" id="password" name="password" value="">
+  <p style="color:red">**Password must be a minimum of 8 characters and contain at least one lowercase letter (a-z), one uppercase letter (A-Z), one number (0-9), and one special character (@, $, !, %, *, ?, &, etc.).</p>
+  <br><br>
+  <input type="submit" value="Register">
+</form>
+
+<a href="/">Back to Login</a>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+0. sudo apt update
+1. sudo apt-get install mariadb-server
+2.1 Once the installation completes run: sudo service mariadb start
+
+2. sudo mysql_secure_installation
+3. Press enter when prompted for the current root password
+4. Provide a new root password
+5. Retype the root password
+6. Answer "Yes" to all questions
+7. Connect to the DB from command line as root user:
+
+   sudo mysql -u root -p
+
+8. Provide the root password
+9. Create a database called "users"
+
+   CREATE DATABASE users;
+
+10. Switch to the "users" database
+
+   USE users;
+
+11. Create a table within the database called "appusers".
+    Our table will consist of the username, password, and info columns
+    that are all character strings of 255 characters:
+
+    CREATE TABLE appusers (username VARCHAR(255), password VARCHAR(255), info VARCHAR(255));
+
+12. Insert a user into the table:
+
+    INSERT INTO appusers VALUES('mikhail', 'passw0rd', 'Where are the cats?');
+
+13. Create a user account (appaccount) that will be used by our node.js application to 
+    access the "users" database and give it priveleges to access all tables in the "users" 
+    database:
+
+    GRANT ALL PRIVILEGES ON users.* TO 'appaccount'@'localhost' IDENTIFIED BY 'apppass';
+
+14. Exit from the root session:
+
+    exit 
+
+15. Login from command line as appaccount to test the account:
+
+    mysql -u appaccount -p
+
+16. Enter the password (apppass)
+
+17. Select the "users" database:
+
+    use users;
+
+18. Display the appusers table:
+
+  SELECT * FROM appusers;
+
+Output:
+
++----------+----------+---------------------+
+| username | password | info                |
++----------+----------+---------------------+
+| mikhail  | passw0rd | Where are the cats? |
++----------+----------+---------------------+
+
+19. Try inserting values into the table:
+
+    INSERT INTO appusers VALUES ('testuser', 'testpass', 'Hellllo???');
+
+20. Display the database users to see if the record has been inserted. 
+
+MariaDB [users]> select * from appusers;
+
++----------+----------+---------------------+
+| username | password | info                |
++----------+----------+---------------------+
+| mikhail  | passw0rd | Where are the cats? |
+| testuser | testpass | Hellllo???          |
++----------+----------+---------------------+
+
+
+
+
+
