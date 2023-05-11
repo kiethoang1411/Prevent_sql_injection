@@ -81,6 +81,11 @@ function checkPasswordStrength(password) {
   }
 }
 
+function isVerificationCodeValid(code) {
+  // Check if the code is a 4-digit number
+  return /^\d{4}$/.test(code);
+}
+
 async function limitFailedLoginAttempts(req, res, next) {
 	const ipAddress = req.ip;
   
@@ -169,7 +174,6 @@ app.get("/", function(req, res) {
 app.get('/dashboard', function(req, res) {
   if (req.session.username) {
     // Construct the query
-    // Construct the query 
     let query = "SELECT username, session, info FROM appusers WHERE username = ? AND session = ?";
 
 
@@ -204,9 +208,10 @@ app.post('/register', async function(req, res) {
   // Get the username and password data from the form
   let userName = req.body.username;
   let password = req.body.password;
+  let verification = req.body.verification;
 
   // Validate the username and password
-  if (isUserNameValid(userName) && isPasswordValid(password)) {
+  if (isUserNameValid(userName) && isPasswordValid(password) && isVerificationCodeValid(verification)) {
     // Check if the user already exists
     let checkQuery = "SELECT username FROM appusers WHERE username = ?";
     mysqlConn.query(checkQuery, [userName], async function(err, qResult) {
@@ -221,10 +226,11 @@ app.post('/register', async function(req, res) {
         if (passwordStrengthValue >= 2) { // Adjust this value based on desired minimum password strength
           // Hash the password
           const hashedPassword = await bcrypt.hash(password, saltRounds);
+          const hasedPin = await bcrypt.hash(verification, saltRounds);
 
           // Insert the new user into the appusers table with the hashed password
-          let insertQuery = "INSERT INTO appusers (username, password, session) VALUES (?, ?, 'not logged in')";
-          mysqlConn.query(insertQuery, [userName, hashedPassword], function(err, insertResult) {
+          let insertQuery = "INSERT INTO appusers (username, password, session, pinNumbers) VALUES (?, ?, 'not logged in', ?)";
+          mysqlConn.query(insertQuery, [userName, hashedPassword, hasedPin], function(err, insertResult) {
             if (err) throw err;
 
             // Registration successful, redirect to the login page
@@ -238,7 +244,7 @@ app.post('/register', async function(req, res) {
     });
   } else {
     // Invalid username or password format
-    res.send("Invalid username or password format. Please follow the specified requirements.");
+    res.send("Invalid username or password or verification code format. Please follow the specified requirements.");
   }
 });
 
@@ -252,6 +258,7 @@ app.post('/login', limitFailedLoginAttempts, async function(req, res) {
 	// Get the username and password data from the form
 	let userName = req.body.username;
 	let password = req.body.password;
+  let verification = req.body.verification;
   
 	// Construct the query
 	let query = "SELECT * FROM appusers WHERE username = ?";
@@ -262,13 +269,15 @@ app.post('/login', limitFailedLoginAttempts, async function(req, res) {
   
 	  if (qResult.length > 0) {
 		console.log("User found in the database");
-		console.log("Stored password hash: ", qResult[0].password);
   
 		// Compare the provided password with the stored hashed password
 		const match = await bcrypt.compare(password, qResult[0].password);
+    const match2 = await bcrypt.compare(verification, qResult[0].pinNumbers);
+
 		console.log("Password match: ", match);
+    console.log("Verification match: ", match);
   
-		if (match) {
+		if (match && match2) {
 		  // Update the session attribute in the appusers table
 		  let updateQuery = "UPDATE appusers SET session = ? WHERE username = ?";
 		  mysqlConn.query(updateQuery, [req.sessionID, userName], function(err, updateResult) {
@@ -291,7 +300,7 @@ app.post('/login', limitFailedLoginAttempts, async function(req, res) {
 		res.send("<b>Wrong</b>");
 	  }
 	});
-  });  
+});  
 
 // The logout function
 // @param req - the request
